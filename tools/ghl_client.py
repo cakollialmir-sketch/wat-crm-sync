@@ -262,23 +262,39 @@ def trigger_workflow(contact_id: str, workflow_id: str) -> dict:
 
 # Normalizes the many ways dialers label the same disposition
 _DISP_NORMALIZE = {
+    # No Answer
     "no_answer": "no_answer",
     "no-answer": "no_answer",
     "noanswer": "no_answer",
     "no answer": "no_answer",
+    "no_contact": "no_answer",
+    "hung_up": "no_answer",
+    "customer_hang_up": "no_answer",
+    # Voicemail
     "voicemail": "voicemail",
     "voicemail_left": "voicemail",
+    "left_voicemail": "voicemail",
     "left voicemail": "voicemail",
+    "hit_voicemail": "voicemail",
+    # Callback
     "callback": "callback",
     "callback_scheduled": "callback",
+    "call_back_scheduled": "callback",
     "call back": "callback",
+    "busy_-_call_back_later": "callback",
     "follow_up": "callback",
+    # Appointment / Meeting
     "meeting_booked": "meeting_booked",
     "appointment_set": "meeting_booked",
     "booked": "meeting_booked",
+    # Not Interested / DNC
     "not_interested": "not_interested",
     "not interested": "not_interested",
     "do_not_call": "not_interested",
+    "wrong_number": "not_interested",
+    "dnc_all_numbers": "not_interested",
+    "dnc_this_number": "not_interested",
+    # Show (Zoom demo attended)
     "show": "show",
     "attended": "show",
 }
