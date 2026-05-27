@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cold Call Script</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f0f0f;
+      color: #e8e8e8;
+      line-height: 1.7;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    .header {
+      padding: 20px 28px 16px;
+      border-bottom: 1px solid #1e1e1e;
+      flex-shrink: 0;
+    }
+
+    .header h1 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .header p {
+      font-size: 0.75rem;
+      color: #444;
+      margin-top: 2px;
+    }
+
+    /* ── Two-column grid ── */
+    .workspace {
+      display: grid;
+      grid-template-columns: 58% 42%;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .panel {
+      overflow-y: auto;
+      padding: 28px 28px 60px;
+    }
+
+    .panel-left {
+      border-right: 1px solid #1e1e1e;
+    }
+
+    /* ── Section headers ── */
+    .section-label {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #444;
+      margin-bottom: 14px;
+      padding-bottom: 7px;
+      border-bottom: 1px solid #1e1e1e;
+    }
+
+    /* ── Phase blocks ── */
+    .phase {
+      margin-bottom: 32px;
+    }
+
+    .phase-header {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .phase-num {
+      font-size: 0.62rem;
+      font-weight: 700;
+      color: #3b82f6;
+      background: #1d3a6e22;
+      border: 1px solid #1d3a6e55;
+      border-radius: 3px;
+      padding: 2px 7px;
+      white-space: nowrap;
+    }
+
+    .phase-title {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .phase-timing {
+      font-size: 0.68rem;
+      color: #3b3b3b;
+      margin-left: auto;
+    }
+
+    .say-block {
+      background: #141414;
+      border-left: 3px solid #3b82f6;
+      border-radius: 0 4px 4px 0;
+      padding: 14px 18px;
+      margin-bottom: 10px;
+    }
+
+    .say-block p {
+      font-size: 1rem;
+      color: #e2e2e2;
+      font-style: italic;
+      margin-bottom: 8px;
+    }
+
+    .say-block p:last-child { margin-bottom: 0; }
+
+    .say-block .branch {
+      font-style: normal;
+      font-size: 0.8rem;
+      color: #555;
+      margin-top: 6px;
+    }
+
+    .say-block .branch span {
+      color: #3b82f6;
+      font-weight: 600;
+    }
+
+    .coach {
+      font-size: 0.75rem;
+      color: #3b3b3b;
+      font-style: normal;
+      margin-top: 6px;
+      padding-left: 4px;
+    }
+
+    .coach strong {
+      color: #555;
+      font-weight: 600;
+    }
+
+    /* ── Pause chip ── */
+    .pause-chip {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: #c9a227;
+      background: #1f1900;
+      border: 1px solid #3a2e00;
+      border-radius: 3px;
+      padding: 2px 8px;
+      margin: 4px 0 10px;
+      letter-spacing: 0.04em;
+    }
+
+    .micro-q {
+      background: #0e1a0e;
+      border-left: 3px solid #22c55e;
+      border-radius: 0 4px 4px 0;
+      padding: 10px 14px;
+      margin-bottom: 6px;
+      font-size: 0.92rem;
+      color: #d1fae5;
+      font-style: italic;
+    }
+
+    /* ── Delivery Rules ── */
+    .delivery-sub {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #3b82f6;
+      margin: 18px 0 8px;
+    }
+
+    .tonality-note {
+      font-size: 0.88rem;
+      color: #aaa;
+      background: #141414;
+      border-radius: 4px;
+      padding: 12px 16px;
+      margin-bottom: 4px;
+    }
+
+    .tonality-note em {
+      color: #e2e2e2;
+      font-style: italic;
+    }
+
+    .pause-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0 4px;
+      font-size: 0.82rem;
+    }
+
+    .pause-table td {
+      padding: 7px 10px;
+      border-bottom: 1px solid #1e1e1e;
+      color: #aaa;
+      vertical-align: top;
+    }
+
+    .pause-table td:last-child {
+      color: #c9a227;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .emphasis-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 8px 0;
+    }
+
+    .em-chip {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #3b82f6;
+      background: #1d3a6e18;
+      border: 1px solid #1d3a6e55;
+      border-radius: 3px;
+      padding: 3px 10px;
+    }
+
+    /* ── Divider ── */
+    .divider {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      margin: 28px 0;
+    }
+
+    /* ── Mindset ── */
+    .mindset-block {
+      background: #111;
+      border-radius: 6px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .mindset-block p {
+      font-size: 0.9rem;
+      color: #888;
+      margin-bottom: 8px;
+    }
+
+    .mindset-block .big {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #e8e8e8;
+    }
+
+    .mindset-block .accent { color: #22c55e; }
+
+    /* ── RIGHT PANEL — Objections ── */
+    .panel-right { background: #0c0c0c; }
+
+    .panel-right .section-label { color: #f59e0b44; border-color: #1e1e1e; }
+
+    .objection {
+      background: #141414;
+      border-radius: 5px;
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+
+    .obj-header {
+      padding: 12px 16px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+      gap: 8px;
+    }
+
+    .obj-header:hover { background: #181818; }
+
+    .obj-trigger {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #f59e0b;
+      line-height: 1.4;
+    }
+
+    .obj-chevron {
+      color: #333;
+      font-size: 0.7rem;
+      flex-shrink: 0;
+      transition: transform 0.2s;
+    }
+
+    .obj-body {
+      display: none;
+      padding: 0 16px 14px;
+      font-size: 0.88rem;
+      color: #bbb;
+      line-height: 1.7;
+    }
+
+    .obj-body p {
+      font-style: italic;
+      margin-bottom: 6px;
+    }
+
+    .obj-body p:last-child { margin-bottom: 0; }
+
+    .obj-body .listen-note {
+      font-style: normal;
+      font-size: 0.72rem;
+      color: #444;
+      margin: 6px 0 4px;
+    }
+
+    .obj-pause {
+      display: inline-block;
+      font-size: 0.62rem;
+      font-weight: 700;
+      color: #c9a227;
+      background: #1f1900;
+      border: 1px solid #3a2e00;
+      border-radius: 3px;
+      padding: 1px 7px;
+      margin: 3px 0 6px;
+      letter-spacing: 0.04em;
+    }
+
+    .obj-close {
+      font-style: normal;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #3b82f6;
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid #1e1e1e;
+    }
+
+    .objection.open .obj-body { display: block; }
+    .objection.open .obj-chevron { transform: rotate(180deg); }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+      .panel-left {
+        border-right: none;
+        border-bottom: 2px solid #1e1e1e;
+      }
+      html, body { height: auto; }
+      .panel { overflow-y: visible; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Cold Call Script</h1>
+    <p>Straight Line Method &nbsp;·&nbsp; Screen share close</p>
+  </div>
+
+  <div class="workspace">
+
+    <!-- ════════════════════════════════════════
+         LEFT PANEL — Script
+    ════════════════════════════════════════ -->
+    <div class="panel panel-left">
+
+      <div class="section-label">The Script</div>
+
+      <!-- Phase 1 -->
+      <div class="phase">
+        <div class="phase-header">
+          <span class="phase-num">Phase 1</span>
+          <span class="phase-title">Introduction</span>
+          <span class="phase-timing">~30 sec</span>
+        </div>
+        <div class="say-block">
+          <p>"Hey, is this [Owner Name]?"</p>
+        </div>
+        <div class="pause-chip">Pause: 1 sec — let them answer</div>
+        <div class="say-block">
+          <p>"Hey man, it's Almir."</p>
+        </div>
+        <div class="pause-chip">Pause: 0.5 sec</div>
+        <div class="say-block">
+          <p>"My mom's friend Christina told me about you guys, so I took a look at the business."</p>
+        </div>
+        <div class="pause-chip">Pause: 1 sec</div>
+        <div class="say-block">
+          <p>"You guys seem to be doing great work. Your Google reviews show people already trust you."</p>
+        </div>
+        <div class="pause-chip">Pause: 1 sec</div>
+        <div class="say-block">
+          <p>"Only thing I noticed is, I couldn't find a website for you guys. Is that right?"</p>
+        </div>
+        <div class="pause-chip">Pause: 2 sec — shut up and let them answer</div>
+      </div>
+
+      <!-- Phase 2 -->
+      <div class="phase">
+        <div class="phase-header">
+          <span class="phase-num">Phase 2</span>
+          <span class="phase-title">Body</span>
+          <span class="phase-timing">~60 sec</span>
+        </div>
+        <div class="coach" style="margin-bottom: 10px;"><strong>If they say yes, no website:</strong></div>
+        <div class="say-block">
+          <p>"That's actually why I'm calling."</p>
+        </div>
+        <div class="pause-chip">Pause: 0.5 sec</div>
+        <div class="say-block">
+          <p>"I just recently graduated college and started my own web design agency…"</p>
+        </div>
+        <div class="pause-chip">Pause: 0.5 sec</div>
+        <div class="say-block">
+          <p>"and I actually built you guys a website."</p>
+        </div>
+        <div class="pause-chip">Pause: 1.5 sec — let that land</div>
+        <div class="say-block">
+          <p>"It's built around your business, the areas you serve, and the kind of work you do."</p>
+        </div>
+        <div class="pause-chip">Pause: 1 sec</div>
+        <div class="say-block">
+          <p>"The idea is simple."</p>
+        </div>
+        <div class="pause-chip">Pause: 0.5 sec</div>
+        <div class="say-block">
+          <p>"When someone hears about you from word of mouth, a lot of times they'll look you up before they call."</p>
+        </div>
+        <div class="pause-chip">Pause: 1 sec</div>
+        <div class="say-block">
+          <p>"Your Google page might show up…"</p>
+        </div>
+        <div class="pause-chip">Pause: 0.5 sec</div>
+        <div class="say-block">
+          <p>"but without a website connected to it, some people may not feel fully sold yet."</p>
+        </div>
+        <div class="pause-chip">Pause: 1 sec</div>
+        <div class="say-block">
+          <p>"The website gives them one clean place to see your work, see what you offer, and either call you or request a quote."</p>
+        </div>
+        <div class="pause-chip">Pause: 1 sec</div>
+        <div class="say-block">
+          <p>"Does that make sense?"</p>
+        </div>
+        <div class="pause-chip">Pause: 2 sec — let them answer</div>
+      </div>
+
+      <!-- Phase 3 -->
+      <div class="phase">
+        <div class="phase-header">
+          <span class="phase-num">Phase 3</span>
+          <span class="phase-title">Word-of-Mouth Tie Down</span>
+          <span class="phase-timing">~30 sec</span>
+        </div>
+        <div class="say-block">
+          <p>"And I'm assuming most of your work is probably word of mouth right now, right?"</p>
+        </div>
+        <div class="pause-chip">Pause: 2 sec — let them answer</div>
+        <div class="coach" style="margin-bottom: 10px;"><strong>If they say yes:</strong></div>
+        <div class="say-block">
+          <p>"Perfect, man. That's usually the best type of business."</p>
+        </div>
+        <div class="pause-chip">Pause: 0.5 sec</div>
+        <div class="say-block">
+          <p>"The website doesn't replace word of mouth. It supports it."</p>
+        </div>
+        <div class="pause-chip">Pause: 1 sec</div>
+        <div class="say-block">
+          <p>"So when someone hears your name and looks you up, they don't hesitate or end up calling somebody else."</p>
+        </div>
+        <div class="pause-chip">Pause: 1 sec</div>
+        <div class="say-block">
+          <p>"Does that make sense?"</p>
+        </div>
+        <div class="pause-chip">Pause: 1.5–2 sec</div>
+      </div>
+
+      <!-- Phase 4 -->
+      <div class="phase">
+        <div class="phase-header">
+          <span class="phase-num">Phase 4</span>
+          <span class="phase-title">Close</span>
+          <span class="phase-timing">~20 sec</span>
+        </div>
+        <div class="say-block">
+          <p>"Since I already built you a website, I wanted to show it to you on a quick screen share."</p>
+        </div>
+        <div class="pause-chip">Pause: 0.5 sec</div>
+        <div class="say-block">
+          <p>"It takes about 10 minutes."</p>
+        </div>
+        <div class="pause-chip">Pause: 0.5 sec</div>
+        <div class="say-block">
+          <p>"You can look it over, see what your business would look like with a website, and then decide if it even makes sense."</p>
+        </div>
+        <div class="pause-chip">Pause: 1 sec</div>
+        <div class="say-block">
+          <p>"Would later today or tomorrow work better for you?"</p>
+        </div>
+        <div class="pause-chip">Pause: 3 sec — shut up, do not talk first</div>
+      </div>
+
+      <hr class="divider" />
+
+      <!-- Delivery Rules -->
+      <div class="section-label">Delivery Rules</div>
+
+      <div class="delivery-sub">Tonality</div>
+      <div class="tonality-note">
+        calm &nbsp;·&nbsp; casual &nbsp;·&nbsp; direct &nbsp;·&nbsp; slightly curious<br />
+        Not excited. Not needy. Not "sales guy." Sound like:<br />
+        <em>"I built something. It might help. Let me show you."</em>
+      </div>
+
+      <div class="delivery-sub">Pause Rules</div>
+      <table class="pause-table">
+        <tr>
+          <td>After asking a direct question</td>
+          <td>2–3 sec</td>
+        </tr>
+        <tr>
+          <td>After saying "I built you guys a website"</td>
+          <td>1.5 sec</td>
+        </tr>
+        <tr>
+          <td>After explaining a value point</td>
+          <td>1 sec</td>
+        </tr>
+        <tr>
+          <td>Before asking for the appointment</td>
+          <td>1 sec</td>
+        </tr>
+        <tr>
+          <td>After the close</td>
+          <td>3 sec min</td>
+        </tr>
+      </table>
+      <div class="coach" style="margin-top: 8px; margin-bottom: 18px;"><strong>The biggest mistake:</strong> talking again after the close. Ask the question and shut up.</div>
+
+      <div class="delivery-sub">Words to Emphasize</div>
+      <div class="coach" style="margin-bottom: 8px;">Slow down slightly on these. Don't overact — just let them land.</div>
+      <div class="emphasis-row">
+        <span class="em-chip">built</span>
+        <span class="em-chip">website</span>
+        <span class="em-chip">word of mouth</span>
+        <span class="em-chip">look you up</span>
+        <span class="em-chip">request a quote</span>
+        <span class="em-chip">10 minutes</span>
+        <span class="em-chip">later today or tomorrow</span>
+      </div>
+
+      <hr class="divider" />
+
+      <!-- Mindset -->
+      <div class="mindset-block">
+        <p class="big">Make it sound like a <span class="accent">normal conversation</span> — not a script.</p>
+        <p>Your goal right now is not memorization.</p>
+        <p>Ask the question. <strong style="color: #e8e8e8;">Stop talking.</strong></p>
+      </div>
+
+    </div>
+
+    <!-- ════════════════════════════════════════
+         RIGHT PANEL — Objections
+    ════════════════════════════════════════ -->
+    <div class="panel panel-right">
+
+      <div class="section-label" style="color: #92400e; border-color: #2a1f00;">Objections — Click to Expand</div>
+
+      <div class="objection">
+        <div class="obj-header" onclick="toggle(this)">
+          <span class="obj-trigger">"Just send it over."</span>
+          <span class="obj-chevron">▼</span>
+        </div>
+        <div class="obj-body">
+          <p>"Yeah, I can send it over after."</p>
+          <div class="obj-pause">Pause: 0.5 sec</div>
+          <p>"The only thing is, it's not online yet. It's built on my side right now."</p>
+          <div class="obj-pause">Pause: 1 sec</div>
+          <p>"So the easiest thing is for me to share my screen, walk you through it for 10 minutes, and show you how it looks."</p>
+          <div class="obj-pause">Pause: 0.5 sec</div>
+          <p>"Then after that, I can send it over either way."</p>
+          <div class="obj-pause">Pause: 0.5 sec</div>
+          <div class="obj-close">"Would later today or tomorrow work better?"</div>
+        </div>
+      </div>
+
+      <div class="objection">
+        <div class="obj-header" onclick="toggle(this)">
+          <span class="obj-trigger">"How much is it?"</span>
+          <span class="obj-chevron">▼</span>
+        </div>
+        <div class="obj-body">
+          <p>"Fair question."</p>
+          <div class="obj-pause">Pause: 0.5 sec</div>
+          <p>"I don't like throwing out random prices before someone even sees what was built."</p>
+          <div class="obj-pause">Pause: 1 sec</div>
+          <p>"Let me show you the website first."</p>
+          <div class="obj-pause">Pause: 0.5 sec</div>
+          <p>"If you like it, we can talk about price after."</p>
+          <div class="obj-pause">Pause: 0.5 sec</div>
+          <p>"If you don't like it, no big deal."</p>
+          <div class="obj-pause">Pause: 0.5 sec</div>
+          <div class="obj-close">"Would later today or tomorrow work better?"</div>
+        </div>
+      </div>
+
+      <div class="objection">
+        <div class="obj-header" onclick="toggle(this)">
+          <span class="obj-trigger">"I need to talk to my wife."</span>
+          <span class="obj-chevron">▼</span>
+        </div>
+        <div class="obj-body">
+          <p>"Perfect, man. That's actually even better."</p>
+          <div class="obj-pause">Pause: 0.5 sec</div>
+          <p>"Get her on the call too. That way you both can look at it together."</p>
+          <div class="obj-pause">Pause: 1 sec</div>
+          <p>"There's no obligation. I'm just showing you what I built for the business, and then you guys can decide if it makes sense."</p>
+          <div class="obj-pause">Pause: 0.5 sec</div>
+          <div class="obj-close">"Would later today work, or is tomorrow better?"</div>
+        </div>
+      </div>
+
+      <div class="objection">
+        <div class="obj-header" onclick="toggle(this)">
+          <span class="obj-trigger">"We're not interested."</span>
+          <span class="obj-chevron">▼</span>
+        </div>
+        <div class="obj-body">
+          <p>"Totally fair."</p>
+          <div class="obj-pause">Pause: 0.5 sec</div>
+          <p>"Just so I don't bother you again…"</p>
+          <div class="obj-pause">Pause: 0.5 sec</div>
+          <p>"is it because you don't want a website at all, or because you already have enough work?"</p>
+          <div class="obj-pause">Pause: 2 sec — let them answer</div>
+          <div class="listen-note">If they say they have enough work:</div>
+          <p>"That makes sense. That's a good problem."</p>
+          <div class="obj-pause">Pause: 0.5 sec</div>
+          <p>"The website isn't only about getting more calls."</p>
+          <div class="obj-pause">Pause: 0.5 sec</div>
+          <p>"It can also help you look more established and bring in better jobs from people who already trust you before they call."</p>
+          <div class="obj-pause">Pause: 1 sec</div>
+          <p>"That's why I figured it was worth showing you."</p>
+          <div class="obj-pause">Pause: 0.5 sec</div>
+          <p>"It only takes 10 minutes."</p>
+          <div class="obj-close">"Would later today work, or is tomorrow better?"</div>
+        </div>
+      </div>
+
+      <div class="objection">
+        <div class="obj-header" onclick="toggle(this)">
+          <span class="obj-trigger">"We already have a website."</span>
+          <span class="obj-chevron">▼</span>
+        </div>
+        <div class="obj-body">
+          <p>"Got it. I may have missed it when I searched."</p>
+          <div class="obj-pause">Pause: 0.5 sec</div>
+          <p>"Is it actually helping people call or request quotes, or is it more just there so people can find you?"</p>
+          <div class="obj-pause">Pause: 2 sec — let them answer</div>
+          <div class="listen-note">If they say it's just there:</div>
+          <p>"Gotcha. That's the difference."</p>
+          <div class="obj-pause">Pause: 0.5 sec</div>
+          <p>"What I built is more focused on making it easy for people to see your work, understand what you do, and request a quote."</p>
+          <div class="obj-pause">Pause: 1 sec</div>
+          <p>"It's worth comparing for 10 minutes."</p>
+          <div class="obj-pause">Pause: 0.5 sec</div>
+          <div class="obj-close">"Would later today or tomorrow work better?"</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    function toggle(header) {
+      header.parentElement.classList.toggle('open');
+    }
+  </script>
+</body>
+</html>
