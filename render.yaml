@@ -1,0 +1,42 @@
+services:
+  - type: web
+    name: wat-crm-sync
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn webhook_server:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      # GoHighLevel
+      - key: GHL_API_TOKEN
+        sync: false
+      - key: GHL_LOCATION_ID
+        sync: false
+      - key: GHL_PIPELINE_ID
+        sync: false
+      - key: GHL_CALENDAR_ID
+        sync: false
+      - key: GHL_CONFIRMATION_WORKFLOW_ID
+        sync: false
+      # Pipeline stage IDs
+      - key: GHL_STAGE_NO_ANSWER
+        sync: false
+      - key: GHL_STAGE_VOICEMAIL
+        sync: false
+      - key: GHL_STAGE_CALLBACK
+        sync: false
+      - key: GHL_STAGE_APPT_SET
+        sync: false
+      - key: GHL_STAGE_SHOW
+        sync: false
+      - key: GHL_STAGE_NOT_INTERESTED
+        sync: false
+      # Webhook secrets
+      - key: CALLTOOLS_WEBHOOK_SECRET
+        sync: false
+      - key: CALENDLY_WEBHOOK_SECRET
+        sync: false
+      - key: ZOOM_WEBHOOK_SECRET
+        sync: false
+      # Calendly API
+      - key: CALENDLY_API_TOKEN
+        sync: false
