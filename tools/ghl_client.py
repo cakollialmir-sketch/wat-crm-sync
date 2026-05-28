@@ -9,7 +9,7 @@ Rate limits: 100 req/10s — tenacity handles 429s with exponential backoff
 """
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import requests
@@ -276,7 +276,7 @@ _DISP_NORMALIZE = {
     "left_voicemail": "voicemail",
     "left voicemail": "voicemail",
     "hit_voicemail": "voicemail",
-    # Callback
+    # Callback / Follow Up
     "callback": "callback",
     "callback_scheduled": "callback",
     "call_back_scheduled": "callback",
@@ -287,21 +287,42 @@ _DISP_NORMALIZE = {
     "meeting_booked": "meeting_booked",
     "appointment_set": "meeting_booked",
     "booked": "meeting_booked",
-    # Not Interested / DNC
-    "not_interested": "not_interested",
-    "not interested": "not_interested",
-    "do_not_call": "not_interested",
-    "wrong_number": "not_interested",
-    "dnc_all_numbers": "not_interested",
-    "dnc_this_number": "not_interested",
-    # Show (Zoom demo attended)
+    # No Show
+    "no_show": "no_show",
+    "no-show": "no_show",
+    "noshow": "no_show",
+    # Show / Demo Attended
     "show": "show",
     "attended": "show",
+    "demo_done": "show",
+    "demo_completed": "show",
+    # Closed Won
+    "closed_won": "closed_won",
+    "closed-won": "closed_won",
+    "won": "closed_won",
+    "sale": "closed_won",
+    # Not Interested (soft no — could retry in 6 months)
+    "not_interested": "not_interested",
+    "not interested": "not_interested",
+    # Bad Number (wrong/disconnected — contact cleanup needed)
+    "bad_number": "bad_number",
+    "bad-number": "bad_number",
+    "wrong_number": "bad_number",
+    "disconnected": "bad_number",
+    # DNC — permanent, legal, do not call ever
+    "dnc": "dnc",
+    "do_not_call": "dnc",
+    "dnc_all_numbers": "dnc",
+    "dnc_this_number": "dnc",
 }
 
 
 def normalize_disposition(raw: str) -> str:
     return _DISP_NORMALIZE.get(raw.lower().strip().replace(" ", "_"), raw.lower().strip())
+
+
+def _hours_from_now(hours: int) -> str:
+    return (datetime.now(timezone.utc) + timedelta(hours=hours)).replace(microsecond=0).isoformat()
 
 
 def handle_disposition(
@@ -320,12 +341,16 @@ def handle_disposition(
     Returns a summary dict of what was created/updated (keys = action names).
     """
     stage_map = {
-        "no_answer": os.getenv("GHL_STAGE_NO_ANSWER"),
-        "voicemail": os.getenv("GHL_STAGE_VOICEMAIL"),
-        "callback": os.getenv("GHL_STAGE_CALLBACK"),
+        "no_answer":      os.getenv("GHL_STAGE_NO_ANSWER"),
+        "voicemail":      os.getenv("GHL_STAGE_VOICEMAIL"),
+        "callback":       os.getenv("GHL_STAGE_CALLBACK"),
         "meeting_booked": os.getenv("GHL_STAGE_APPT_SET"),
+        "no_show":        os.getenv("GHL_STAGE_NO_SHOW"),
+        "show":           os.getenv("GHL_STAGE_DEMO_COMPLETED"),
+        "closed_won":     os.getenv("GHL_STAGE_CLOSED_WON"),
         "not_interested": os.getenv("GHL_STAGE_NOT_INTERESTED"),
-        "show": os.getenv("GHL_STAGE_SHOW"),
+        "bad_number":     os.getenv("GHL_STAGE_DNC"),
+        "dnc":            os.getenv("GHL_STAGE_DNC"),
     }
 
     disposition = normalize_disposition(disposition)
@@ -340,30 +365,82 @@ def handle_disposition(
             name=f"Deal — {label}",
         )
 
-    if disposition == "not_interested":
-        result["tags"] = update_contact(contact_id, {"tags": ["not-interested"]})
+    if disposition == "voicemail":
+        result["tags"] = update_contact(contact_id, {"tags": ["voicemail"]})
 
-    if disposition == "callback" and callback_dt:
-        result["task"] = create_task(
-            contact_id=contact_id,
-            title="Follow-up call",
-            due_date=callback_dt,
-            description="Callback scheduled from cold call.",
-        )
+    elif disposition == "callback":
+        result["tags"] = update_contact(contact_id, {"tags": ["follow-up"]})
+        if callback_dt:
+            result["task"] = create_task(
+                contact_id=contact_id,
+                title="Follow-up call",
+                due_date=callback_dt,
+                description="Callback scheduled from cold call.",
+            )
 
-    if disposition == "meeting_booked":
+    elif disposition == "meeting_booked":
+        result["tags"] = update_contact(contact_id, {"tags": ["appt-set"]})
         cal_id = calendar_id or os.getenv("GHL_CALENDAR_ID", "")
         if meeting_dt and cal_id:
             result["appointment"] = create_appointment(
                 contact_id=contact_id,
                 calendar_id=cal_id,
-                title=f"Sales Call — {label}",
+                title=f"Screen Share — {label}",
                 start_time=meeting_dt,
                 end_time=meeting_end_dt or meeting_dt,
+                notes=notes_text,
             )
+        result["task"] = create_task(
+            contact_id=contact_id,
+            title=f"Build demo before appointment — {label}",
+            due_date=meeting_dt or _hours_from_now(48),
+            description="Build the custom demo before the screen share. Review their niche, call notes, and city.",
+        )
         wf_id = os.getenv("GHL_CONFIRMATION_WORKFLOW_ID")
         if wf_id:
             result["workflow"] = trigger_workflow(contact_id, wf_id)
+
+    elif disposition == "no_show":
+        result["tags"] = update_contact(contact_id, {"tags": ["no-show"]})
+        result["task"] = create_task(
+            contact_id=contact_id,
+            title=f"Reschedule no-show — {label}",
+            due_date=_hours_from_now(24),
+            description="Lead missed the screen share. Follow up and try to rebook.",
+        )
+        wf_id = os.getenv("GHL_NO_SHOW_WORKFLOW_ID")
+        if wf_id:
+            result["workflow"] = trigger_workflow(contact_id, wf_id)
+
+    elif disposition == "show":
+        result["tags"] = update_contact(contact_id, {"tags": ["demo-done"]})
+        result["task"] = create_task(
+            contact_id=contact_id,
+            title=f"Close follow-up — {label}",
+            due_date=_hours_from_now(24),
+            description="Demo completed. Follow up to close the sale.",
+        )
+
+    elif disposition == "closed_won":
+        result["tags"] = update_contact(contact_id, {"tags": ["closed-won"]})
+        result["task"] = create_task(
+            contact_id=contact_id,
+            title=f"Build production website — {label}",
+            due_date=_hours_from_now(48),
+            description="Client purchased. Build the full production site.",
+        )
+        wf_id = os.getenv("GHL_CLOSED_WON_WORKFLOW_ID")
+        if wf_id:
+            result["workflow"] = trigger_workflow(contact_id, wf_id)
+
+    elif disposition == "not_interested":
+        result["tags"] = update_contact(contact_id, {"tags": ["not-interested"]})
+
+    elif disposition == "bad_number":
+        result["tags"] = update_contact(contact_id, {"tags": ["bad-number"]})
+
+    elif disposition == "dnc":
+        result["tags"] = update_contact(contact_id, {"tags": ["dnc"]})
 
     if notes_text:
         result["note"] = add_note(contact_id, notes_text)

@@ -102,7 +102,12 @@ def calltools_webhook():
     raw_disp = payload.get("disposition", "")
     disposition = ghl.normalize_disposition(raw_disp)
     duration = payload.get("call_duration_seconds", 0)
-    notes_text = payload.get("notes") or f"Call ({duration}s) — disposition: {raw_disp}"
+    agent_notes = payload.get("notes", "").strip()
+    notes_text = (
+        f"Disposition: {raw_disp} | Duration: {duration}s\n{agent_notes}"
+        if agent_notes
+        else f"Disposition: {raw_disp} | Duration: {duration}s"
+    )
 
     result = ghl.handle_disposition(
         contact_id=contact_id,
@@ -205,7 +210,7 @@ def zoom_webhook():
 
     ghl.add_note(contact_id, f"Zoom demo completed — {duration} min. Topic: {topic}")
 
-    stage_id = os.getenv("GHL_STAGE_SHOW", "")
+    stage_id = os.getenv("GHL_STAGE_DEMO_COMPLETED") or os.getenv("GHL_STAGE_SHOW", "")
     if stage_id:
         ghl.upsert_opportunity(contact_id=contact_id, stage_id=stage_id, name=f"Deal — {host_email}")
 

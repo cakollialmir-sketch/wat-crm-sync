@@ -17,7 +17,7 @@ services:
         sync: false
       - key: GHL_CONFIRMATION_WORKFLOW_ID
         sync: false
-      # Pipeline stage IDs
+      # Pipeline stage IDs (existing)
       - key: GHL_STAGE_NO_ANSWER
         sync: false
       - key: GHL_STAGE_VOICEMAIL
@@ -26,9 +26,25 @@ services:
         sync: false
       - key: GHL_STAGE_APPT_SET
         sync: false
-      - key: GHL_STAGE_SHOW
-        sync: false
       - key: GHL_STAGE_NOT_INTERESTED
+        sync: false
+      # Pipeline stage IDs (new)
+      - key: GHL_STAGE_NEW_LEAD
+        sync: false
+      - key: GHL_STAGE_SENT_TO_DIALER
+        sync: false
+      - key: GHL_STAGE_NO_SHOW
+        sync: false
+      - key: GHL_STAGE_DEMO_COMPLETED
+        sync: false
+      - key: GHL_STAGE_CLOSED_WON
+        sync: false
+      - key: GHL_STAGE_DNC
+        sync: false
+      # Workflow IDs (new)
+      - key: GHL_NO_SHOW_WORKFLOW_ID
+        sync: false
+      - key: GHL_CLOSED_WON_WORKFLOW_ID
         sync: false
       # Webhook secrets
       - key: CALLTOOLS_WEBHOOK_SECRET
