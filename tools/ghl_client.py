@@ -301,6 +301,10 @@ _DISP_NORMALIZE = {
     "closed-won": "closed_won",
     "won": "closed_won",
     "sale": "closed_won",
+    # Send Demo (warm lead — sent website, waiting for them to look it over)
+    "send_demo": "send_demo",
+    "demo_sent": "send_demo",
+    "sent_demo": "send_demo",
     # Not Interested (soft no — could retry in 6 months)
     "not_interested": "not_interested",
     "not interested": "not_interested",
@@ -344,6 +348,7 @@ def handle_disposition(
         "no_answer":      os.getenv("GHL_STAGE_NO_ANSWER"),
         "voicemail":      os.getenv("GHL_STAGE_VOICEMAIL"),
         "callback":       os.getenv("GHL_STAGE_CALLBACK"),
+        "send_demo":      os.getenv("GHL_STAGE_DEMO_SENT"),
         "meeting_booked": os.getenv("GHL_STAGE_APPT_SET"),
         "no_show":        os.getenv("GHL_STAGE_NO_SHOW"),
         "show":           os.getenv("GHL_STAGE_DEMO_COMPLETED"),
@@ -432,6 +437,9 @@ def handle_disposition(
         wf_id = os.getenv("GHL_CLOSED_WON_WORKFLOW_ID")
         if wf_id:
             result["workflow"] = trigger_workflow(contact_id, wf_id)
+
+    elif disposition == "send_demo":
+        result["tags"] = update_contact(contact_id, {"tags": ["demo-sent"]})
 
     elif disposition == "not_interested":
         result["tags"] = update_contact(contact_id, {"tags": ["not-interested"]})

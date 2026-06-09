@@ -98,6 +98,26 @@ def calltools_webhook():
     event = payload.get("event", "")
     log.info(f"CallTools event: {event}")
 
+    if event == "call_note_created":
+        # Agent typed notes during a call — sync to GHL contact
+        contact_data = payload.get("contact", {})
+        name = _clean(contact_data.get("name")) or "Unknown"
+        phone = _clean(contact_data.get("phone"))
+        email = _clean(contact_data.get("email"))
+        note_text = _clean(payload.get("note", ""))
+
+        if not note_text:
+            return jsonify({"accepted": False, "reason": "empty_note"})
+
+        log.info(f"CallTools note: name={name!r} phone={phone!r} note={note_text!r[:60]}")
+        try:
+            contact = ghl.upsert_contact(name=name, phone=phone, email=email)
+            ghl.add_note(contact["id"], f"[Call Tools Note] {note_text}")
+            return jsonify({"ok": True, "contact_id": contact["id"], "note_synced": True})
+        except Exception as exc:
+            log.error(f"CallTools note → GHL failed: {exc}")
+            return jsonify({"ok": False, "error": str(exc)}), 200
+
     if event not in ("call_disposition_created", "call_ended"):
         return jsonify({"accepted": False, "reason": "unhandled_event", "event": event})
 
