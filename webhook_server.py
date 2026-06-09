@@ -77,6 +77,16 @@ def health():
     return jsonify({"status": "ok", "ts": datetime.now(timezone.utc).isoformat()})
 
 
+def _clean(val):
+    """Return None if val is empty, None, or an unresolved Call Tools template string."""
+    if not val:
+        return None
+    s = str(val).strip()
+    if s.startswith("{%") or s.startswith("{{%"):
+        return None
+    return s or None
+
+
 @app.post("/webhook/calltools")
 def calltools_webhook():
     body = request.get_data()
@@ -92,36 +102,45 @@ def calltools_webhook():
         return jsonify({"accepted": False, "reason": "unhandled_event", "event": event})
 
     contact_data = payload.get("contact", {})
-    name = contact_data.get("name") or "Unknown"
-    phone = contact_data.get("phone")
-    email = contact_data.get("email")
+    name = _clean(contact_data.get("name")) or "Unknown"
+    phone = _clean(contact_data.get("phone"))
+    email = _clean(contact_data.get("email"))
 
-    contact = ghl.upsert_contact(name=name, phone=phone, email=email)
-    contact_id = contact["id"]
-
-    raw_disp = payload.get("disposition", "")
+    raw_disp = _clean(payload.get("disposition", "")) or ""
     disposition = ghl.normalize_disposition(raw_disp)
     duration = payload.get("call_duration_seconds", 0)
-    agent_notes = payload.get("notes", "").strip()
+    agent_notes = (_clean(payload.get("notes", "")) or "").strip()
     notes_text = (
         f"Disposition: {raw_disp} | Duration: {duration}s\n{agent_notes}"
         if agent_notes
         else f"Disposition: {raw_disp} | Duration: {duration}s"
     )
 
-    result = ghl.handle_disposition(
-        contact_id=contact_id,
-        disposition=disposition,
-        callback_dt=payload.get("callback_at"),
-        meeting_dt=payload.get("meeting_at"),
-        meeting_end_dt=payload.get("meeting_end_at"),
-        calendar_id=os.getenv("GHL_CALENDAR_ID"),
-        contact_name=name,
-        notes_text=notes_text,
-    )
+    log.info(f"CallTools webhook: name={name!r} phone={phone!r} email={email!r} disp={raw_disp!r}")
 
-    log.info(f"CallTools → GHL: contact={contact_id} disp={disposition} actions={list(result)}")
-    return jsonify({"ok": True, "contact_id": contact_id, "disposition": disposition, "actions": list(result)})
+    try:
+        contact = ghl.upsert_contact(name=name, phone=phone, email=email)
+        contact_id = contact["id"]
+
+        result = ghl.handle_disposition(
+            contact_id=contact_id,
+            disposition=disposition,
+            callback_dt=payload.get("callback_at"),
+            meeting_dt=payload.get("meeting_at"),
+            meeting_end_dt=payload.get("meeting_end_at"),
+            calendar_id=os.getenv("GHL_CALENDAR_ID"),
+            contact_name=name,
+            notes_text=notes_text,
+        )
+
+        log.info(f"CallTools → GHL: contact={contact_id} disp={disposition} actions={list(result)}")
+        return jsonify({"ok": True, "contact_id": contact_id, "disposition": disposition, "actions": list(result)})
+
+    except Exception as exc:
+        log.error(f"CallTools → GHL failed: {exc} | name={name!r} phone={phone!r} disp={raw_disp!r}")
+        # Return 200 so Call Tools doesn't mark it as a webhook error — data was received,
+        # GHL sync failed but that's a transient/config issue, not a bad webhook.
+        return jsonify({"ok": False, "error": str(exc), "disposition": disposition}), 200
 
 
 @app.post("/webhook/calendly")
