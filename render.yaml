@@ -29,6 +29,8 @@ services:
       - key: GHL_STAGE_NOT_INTERESTED
         sync: false
       # Pipeline stage IDs (new)
+      - key: GHL_STAGE_DEMO_SENT
+        value: 70e694e4-f2e7-42c4-843a-8f463ef8c728
       - key: GHL_STAGE_NEW_LEAD
         sync: false
       - key: GHL_STAGE_SENT_TO_DIALER
