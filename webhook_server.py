@@ -109,7 +109,7 @@ def calltools_webhook():
         if not note_text:
             return jsonify({"accepted": False, "reason": "empty_note"})
 
-        log.info(f"CallTools note: name={name!r} phone={phone!r} note={note_text!r[:60]}")
+        log.info(f"CallTools note: name={name!r} phone={phone!r} note={note_text[:60]!r}")
         try:
             contact = ghl.upsert_contact(name=name, phone=phone, email=email)
             ghl.add_note(contact["id"], f"[Call Tools Note] {note_text}")
