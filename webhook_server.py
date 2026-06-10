@@ -97,12 +97,16 @@ def calltools_webhook():
     payload = json.loads(body)
     event = payload.get("event", "")
     log.info(f"CallTools event: {event}")
+    log.info(f"CallTools raw payload: {json.dumps(payload)[:600]}")
 
     if event == "call_note_created":
         # Agent typed notes during a call — sync to GHL contact
         contact_data = payload.get("contact", {})
-        name = _clean(contact_data.get("name")) or "Unknown"
-        phone = _clean(contact_data.get("phone"))
+        # Call Tools sends first_name/last_name separately, not a combined "name" field
+        first = _clean(contact_data.get("first_name")) or ""
+        last = _clean(contact_data.get("last_name")) or ""
+        name = f"{first} {last}".strip() or _clean(contact_data.get("name")) or "Unknown"
+        phone = _clean(contact_data.get("phone")) or _clean(contact_data.get("phone_number"))
         email = _clean(contact_data.get("email"))
         note_text = _clean(payload.get("note", ""))
 
@@ -122,11 +126,20 @@ def calltools_webhook():
         return jsonify({"accepted": False, "reason": "unhandled_event", "event": event})
 
     contact_data = payload.get("contact", {})
-    name = _clean(contact_data.get("name")) or "Unknown"
-    phone = _clean(contact_data.get("phone"))
+    # Call Tools sends first_name/last_name separately, not a combined "name" field
+    first = _clean(contact_data.get("first_name")) or ""
+    last = _clean(contact_data.get("last_name")) or ""
+    name = f"{first} {last}".strip() or _clean(contact_data.get("name")) or "Unknown"
+    phone = _clean(contact_data.get("phone")) or _clean(contact_data.get("phone_number"))
     email = _clean(contact_data.get("email"))
 
-    raw_disp = _clean(payload.get("disposition", "")) or ""
+    # Call Tools may use different keys for disposition depending on version
+    raw_disp = (
+        _clean(payload.get("disposition"))
+        or _clean(payload.get("disposition_label"))
+        or _clean(payload.get("call_disposition"))
+        or ""
+    )
     disposition = ghl.normalize_disposition(raw_disp)
     duration = payload.get("call_duration_seconds", 0)
     agent_notes = (_clean(payload.get("notes", "")) or "").strip()
