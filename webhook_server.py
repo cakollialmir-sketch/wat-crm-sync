@@ -55,6 +55,41 @@ def _verify_zoom_signature(body: bytes, signature: str, timestamp: str, secret: 
     return None
 
 
+_CT_TOKEN = "9c6f69279a2e64bf1e02e02b6db5badc9e63d0b7"
+_CT_BASE  = "https://east-2.calltools.io/api"
+
+
+def _calltools_api_fallback():
+    """When the webhook payload has unresolved template variables (blank data),
+    look up the most recent disposed call via the Call Tools API to get real
+    contact data. Returns a dict with name/phone/email/disposition/duration."""
+    try:
+        hdrs = {"Authorization": f"Token {_CT_TOKEN}"}
+        r = requests.get(f"{_CT_BASE}/calls/?limit=10&ordering=-id", headers=hdrs, timeout=10)
+        r.raise_for_status()
+        for call in r.json().get("results", []):
+            if not call.get("call_disposition"):
+                continue
+            # Disposition name
+            dr = requests.get(f"{_CT_BASE}/calldispositions/{call['call_disposition']}/", headers=hdrs, timeout=10)
+            disp_name = dr.json().get("name", "") if dr.ok else ""
+            # Contact details
+            cr = requests.get(f"{_CT_BASE}/contacts/{call['contact']}/", headers=hdrs, timeout=10)
+            ct = cr.json() if cr.ok else {}
+            first = ct.get("first_name") or ""
+            last  = ct.get("last_name") or ""
+            name  = f"{first} {last}".strip() or ct.get("company") or "Unknown"
+            phone = call.get("destination") or ct.get("phone")
+            email = ct.get("email")
+            duration = call.get("duration") or 0
+            log.info(f"CT API fallback: name={name!r} phone={phone!r} disp={disp_name!r}")
+            return {"name": name, "phone": phone, "email": email,
+                    "disposition": disp_name, "duration": duration}
+    except Exception as e:
+        log.warning(f"CT API fallback failed: {e}")
+    return None
+
+
 def _fetch_calendly_phone(invitee_uri: str):
     token = os.getenv("CALENDLY_API_TOKEN")
     if not token or not invitee_uri:
@@ -140,8 +175,20 @@ def calltools_webhook():
         or _clean(payload.get("call_disposition"))
         or ""
     )
-    disposition = ghl.normalize_disposition(raw_disp)
     duration = payload.get("call_duration_seconds", 0)
+
+    # If templates didn't resolve, fall back to the Call Tools API
+    if not phone and not email and (not name or name == "Unknown"):
+        log.info("Payload empty (unresolved templates) — using CT API fallback")
+        fb = _calltools_api_fallback()
+        if fb:
+            name     = fb["name"]
+            phone    = fb["phone"]
+            email    = fb["email"]
+            raw_disp = fb["disposition"]
+            duration = fb["duration"]
+
+    disposition = ghl.normalize_disposition(raw_disp)
     agent_notes = (_clean(payload.get("notes", "")) or "").strip()
     notes_text = (
         f"Disposition: {raw_disp} | Duration: {duration}s\n{agent_notes}"
