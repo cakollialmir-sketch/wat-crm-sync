@@ -3,7 +3,7 @@ services:
     name: wat-crm-sync
     runtime: python
     buildCommand: pip install -r requirements-server.txt
-    startCommand: uvicorn webhook_server:app --host 0.0.0.0 --port $PORT
+    startCommand: python webhook_server.py
     healthCheckPath: /health
     envVars:
       # GoHighLevel
@@ -38,6 +38,8 @@ services:
       - key: GHL_STAGE_NO_SHOW
         sync: false
       - key: GHL_STAGE_DEMO_COMPLETED
+        sync: false
+      - key: GHL_STAGE_SHOW
         sync: false
       - key: GHL_STAGE_CLOSED_WON
         sync: false
