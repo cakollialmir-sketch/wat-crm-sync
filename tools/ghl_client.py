@@ -278,11 +278,13 @@ _DISP_NORMALIZE = {
     "hit_voicemail": "voicemail",
     # Callback / Follow Up
     "callback": "callback",
+    "call_back": "callback",
     "callback_scheduled": "callback",
     "call_back_scheduled": "callback",
     "call back": "callback",
     "busy_-_call_back_later": "callback",
     "follow_up": "callback",
+    "followup": "callback",
     # Appointment / Meeting
     "meeting_booked": "meeting_booked",
     "appointment_set": "meeting_booked",
