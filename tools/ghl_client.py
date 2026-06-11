@@ -338,6 +338,8 @@ def handle_disposition(
     meeting_end_dt: Optional[str] = None,
     calendar_id: Optional[str] = None,
     contact_name: Optional[str] = None,
+    contact_company: Optional[str] = None,
+    contact_city: Optional[str] = None,
     notes_text: Optional[str] = None,
 ) -> dict:
     """
@@ -395,11 +397,22 @@ def handle_disposition(
                 end_time=meeting_end_dt or meeting_dt,
                 notes=notes_text,
             )
+        biz = contact_company or label
+        city_str = f" ({contact_city})" if contact_city else ""
         result["task"] = create_task(
             contact_id=contact_id,
             title=f"Build demo before appointment — {label}",
             due_date=meeting_dt or _hours_from_now(48),
-            description="Build the custom demo before the screen share. Review their niche, call notes, and city.",
+            description=(
+                f"Build a custom demo site for {biz}{city_str} before the screen share.\n\n"
+                f"Checklist:\n"
+                f"1. Google Business — search '{biz}' → grab service list, photos, reviews snippet\n"
+                f"2. Facebook — search '{biz}' → check for profile/cover photos and any posts\n"
+                f"3. Yelp — search '{biz}' → additional photos or service descriptions\n"
+                f"4. No photos found? Use Unsplash stock (search their trade: landscaper, roofer, etc.)\n"
+                f"5. Review call notes below for anything they specifically mentioned\n"
+                f"6. City/area: {contact_city or 'check call notes'}"
+            ),
         )
         wf_id = os.getenv("GHL_CONFIRMATION_WORKFLOW_ID")
         if wf_id:

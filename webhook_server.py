@@ -76,15 +76,18 @@ def _calltools_api_fallback():
             # Contact details
             cr = requests.get(f"{_CT_BASE}/contacts/{call['contact']}/", headers=hdrs, timeout=10)
             ct = cr.json() if cr.ok else {}
-            first = ct.get("first_name") or ""
-            last  = ct.get("last_name") or ""
-            name  = f"{first} {last}".strip() or ct.get("company") or "Unknown"
-            phone = call.get("destination") or ct.get("phone")
-            email = ct.get("email")
+            first   = ct.get("first_name") or ""
+            last    = ct.get("last_name") or ""
+            company = ct.get("company") or ""
+            city    = ct.get("city") or ""
+            name    = f"{first} {last}".strip() or company or "Unknown"
+            phone   = call.get("destination") or ct.get("phone")
+            email   = ct.get("email")
             duration = call.get("duration") or 0
-            log.info(f"CT API fallback: name={name!r} phone={phone!r} disp={disp_name!r}")
+            log.info(f"CT API fallback: name={name!r} phone={phone!r} disp={disp_name!r} company={company!r} city={city!r}")
             return {"name": name, "phone": phone, "email": email,
-                    "disposition": disp_name, "duration": duration}
+                    "disposition": disp_name, "duration": duration,
+                    "company": company, "city": city}
     except Exception as e:
         log.warning(f"CT API fallback failed: {e}")
     return None
@@ -162,11 +165,13 @@ def calltools_webhook():
 
     contact_data = payload.get("contact", {})
     # Call Tools sends first_name/last_name separately, not a combined "name" field
-    first = _clean(contact_data.get("first_name")) or ""
-    last = _clean(contact_data.get("last_name")) or ""
-    name = f"{first} {last}".strip() or _clean(contact_data.get("name")) or "Unknown"
-    phone = _clean(contact_data.get("phone")) or _clean(contact_data.get("phone_number"))
-    email = _clean(contact_data.get("email"))
+    first   = _clean(contact_data.get("first_name")) or ""
+    last    = _clean(contact_data.get("last_name")) or ""
+    name    = f"{first} {last}".strip() or _clean(contact_data.get("name")) or "Unknown"
+    phone   = _clean(contact_data.get("phone")) or _clean(contact_data.get("phone_number"))
+    email   = _clean(contact_data.get("email"))
+    company = _clean(contact_data.get("company")) or ""
+    city    = _clean(contact_data.get("city")) or ""
 
     # Call Tools may use different keys for disposition depending on version
     raw_disp = (
@@ -187,6 +192,8 @@ def calltools_webhook():
             email    = fb["email"]
             raw_disp = fb["disposition"]
             duration = fb["duration"]
+            company  = fb.get("company", "") or company
+            city     = fb.get("city", "") or city
 
     disposition = ghl.normalize_disposition(raw_disp)
     agent_notes = (_clean(payload.get("notes", "")) or "").strip()
@@ -210,6 +217,8 @@ def calltools_webhook():
             meeting_end_dt=payload.get("meeting_end_at"),
             calendar_id=os.getenv("GHL_CALENDAR_ID"),
             contact_name=name,
+            contact_company=company,
+            contact_city=city,
             notes_text=notes_text,
         )
 
