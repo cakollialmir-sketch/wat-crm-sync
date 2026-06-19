@@ -209,6 +209,11 @@ def calltools_webhook():
         contact = ghl.upsert_contact(name=name, phone=phone, email=email)
         contact_id = contact["id"]
 
+        # Enrich business name if CallTools has it and GHL contact lacks it
+        if company and not contact.get("companyName"):
+            ghl.update_contact(contact_id, {"companyName": company})
+            log.info(f"Patched companyName={company!r} on contact {contact_id}")
+
         result = ghl.handle_disposition(
             contact_id=contact_id,
             disposition=disposition,
@@ -220,6 +225,7 @@ def calltools_webhook():
             contact_company=company,
             contact_city=city,
             notes_text=notes_text,
+            skip_confirmation_workflow=True,
         )
 
         log.info(f"CallTools → GHL: contact={contact_id} disp={disposition} actions={list(result)}")

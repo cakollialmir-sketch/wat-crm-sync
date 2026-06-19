@@ -343,6 +343,7 @@ def handle_disposition(
     contact_company: Optional[str] = None,
     contact_city: Optional[str] = None,
     notes_text: Optional[str] = None,
+    skip_confirmation_workflow: bool = False,
 ) -> dict:
     """
     Central dispatcher — maps a call disposition to the correct GHL operations.
@@ -417,7 +418,7 @@ def handle_disposition(
             ),
         )
         wf_id = os.getenv("GHL_CONFIRMATION_WORKFLOW_ID")
-        if wf_id:
+        if wf_id and not skip_confirmation_workflow:
             result["workflow"] = trigger_workflow(contact_id, wf_id)
 
     elif disposition == "no_show":
