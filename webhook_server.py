@@ -190,7 +190,8 @@ def calltools_webhook():
             name     = fb["name"]
             phone    = fb["phone"]
             email    = fb["email"]
-            raw_disp = fb["disposition"]
+            if not raw_disp:
+                raw_disp = fb["disposition"]
             duration = fb["duration"]
             company  = fb.get("company", "") or company
             city     = fb.get("city", "") or city
