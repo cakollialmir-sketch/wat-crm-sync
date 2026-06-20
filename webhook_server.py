@@ -133,7 +133,7 @@ def calltools_webhook():
         return err
 
     payload = json.loads(body)
-    event = payload.get("event", "")
+    event = payload.get("event", "") or "call_disposition_created"
     log.info(f"CallTools event: {event}")
     log.info(f"CallTools raw payload: {json.dumps(payload)[:600]}")
 
@@ -168,9 +168,9 @@ def calltools_webhook():
     first   = _clean(contact_data.get("first_name")) or ""
     last    = _clean(contact_data.get("last_name")) or ""
     name    = f"{first} {last}".strip() or _clean(contact_data.get("name")) or "Unknown"
-    phone   = _clean(contact_data.get("phone")) or _clean(contact_data.get("phone_number"))
+    phone   = _clean(contact_data.get("phone")) or _clean(contact_data.get("phone_number")) or _clean(payload.get("phone"))
     email   = _clean(contact_data.get("email"))
-    company = _clean(contact_data.get("company")) or ""
+    company = _clean(contact_data.get("company")) or _clean(payload.get("company")) or ""
     city    = _clean(contact_data.get("city")) or ""
 
     # Call Tools may use different keys for disposition depending on version
