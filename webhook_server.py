@@ -59,6 +59,26 @@ _CT_TOKEN = "9c6f69279a2e64bf1e02e02b6db5badc9e63d0b7"
 _CT_BASE  = "https://east-2.calltools.io/api"
 
 
+def _delete_calltools_contact_by_phone(phone: str):
+    """Delete a contact from CallTools by phone number — called after Appointment Set."""
+    try:
+        hdrs = {"Authorization": f"Token {_CT_TOKEN}"}
+        r = requests.get(f"{_CT_BASE}/contacts/", headers=hdrs, params={"phone": phone}, timeout=10)
+        r.raise_for_status()
+        results = r.json().get("results", [])
+        if not results:
+            log.warning(f"CT delete: no contact found for phone={phone!r}")
+            return
+        contact_id = results[0]["id"]
+        d = requests.delete(f"{_CT_BASE}/contacts/{contact_id}/", headers=hdrs, timeout=10)
+        if d.status_code in (200, 204):
+            log.info(f"CT delete: removed contact {contact_id} (phone={phone!r})")
+        else:
+            log.warning(f"CT delete failed: {d.status_code} {d.text[:100]}")
+    except Exception as e:
+        log.warning(f"CT delete error: {e}")
+
+
 def _calltools_api_fallback():
     """When the webhook payload has unresolved template variables (blank data),
     look up the most recent disposed call via the Call Tools API to get real
@@ -230,6 +250,10 @@ def calltools_webhook():
         )
 
         log.info(f"CallTools → GHL: contact={contact_id} disp={disposition} actions={list(result)}")
+
+        if disposition == "meeting_booked" and phone:
+            _delete_calltools_contact_by_phone(phone)
+
         return jsonify({"ok": True, "contact_id": contact_id, "disposition": disposition, "actions": list(result)})
 
     except Exception as exc:
